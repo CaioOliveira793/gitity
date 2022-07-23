@@ -2,15 +2,17 @@
   "name": "proxy_objects",
   "version": "0.1.0",
   "description": "Testing proxy objects",
+  "author": "Caio Oliveira",
+  "type": "commonjs",
   "main": "src/main.ts",
   "scripts": {
     "test": "test",
-    "dev": "ts-node-dev src/main.ts"
+    "run": "node --loader ts-node/esm src/main.ts"
   },
-  "author": "",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^18.0.6",
+    "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^4.7.4"
   }

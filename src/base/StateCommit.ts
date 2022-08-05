@@ -27,19 +27,35 @@ export interface StateDiff {
 }
 
 export interface StateCommitAuthor {
-	id?: string;
-	name?: string;
-	email?: string;
+	id: string | null;
+	name: string;
+	email: string | null;
 }
 
 export type StateCommitMetadata = Record<string, string>;
 
-export interface StateCommit<Event> {
+export interface StateCommit {
+	/** Commit id */
 	id: string;
-	diffs: StateDiff[];
-	event: Event;
-	version: number;
+
+	/** The commit date */
 	date: Date;
+
+	/** Serialized event that originated the commit */
+	event: string;
+
+	/** Entity id */
+	entity_id: string;
+
+	/** Entity version */
+	version: number;
+
+	/** Commit diffs (serialized) */
+	diffs: string;
+
+	/** Commit author */
 	author: StateCommitAuthor;
+
+	/** Commit metadata */
 	metadata: StateCommitMetadata;
 }

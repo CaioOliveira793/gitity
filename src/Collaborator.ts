@@ -1,4 +1,5 @@
 import { Address, AddressData } from "./Address";
+import { Snapshot } from "./base/StateSnapshot";
 import { TrackedEntity, RestoreTrackedEntityData } from "./base/TrackedEntity";
 
 export interface CollaboratorState {
@@ -6,18 +7,15 @@ export interface CollaboratorState {
 	email: string;
 	birthdate: Date;
 	address: Address;
+	'test "prop"': string;
 }
 
 export interface CollaboratorRestoreState {
 	name: string;
 	email: string;
 	birthdate: Date;
+	'test "prop"': string;
 	address: AddressData;
-}
-
-export enum CollaboratorChangeEvent {
-	Create = 'create_collaborator_command',
-	Update = 'update_collaborator_command',
 }
 
 export interface CollaboratorData {
@@ -27,12 +25,13 @@ export interface CollaboratorData {
 	address: AddressData;
 }
 
-export class Collaborator extends TrackedEntity<CollaboratorState, CollaboratorChangeEvent> {
+export class Collaborator extends TrackedEntity<CollaboratorState> {
 	public static create(data: CollaboratorData): Collaborator {
 		const state: CollaboratorState = {
 			email: data.email,
 			name: data.name,
 			birthdate: data.birthdate,
+			'test "prop"': '12345',
 			address: new Address(data.address),
 		};
 
@@ -40,7 +39,22 @@ export class Collaborator extends TrackedEntity<CollaboratorState, CollaboratorC
 	}
 
 	public static restore({ id, state, version }: RestoreTrackedEntityData<CollaboratorRestoreState>): Collaborator {
-		return new Collaborator({ id, version, state: Collaborator.restoreState(state) });
+		return new Collaborator({
+			id,
+			version,
+			state: Collaborator.restoreState(state)
+		});
+	}
+
+	public static restorePreviusVersion(snapshot: Snapshot): Collaborator {
+		const state = snapshot.state as unknown as CollaboratorRestoreState;
+		Collaborator.validateState(state);
+
+		return new Collaborator({
+			id: snapshot.entityId,
+			version: snapshot.version,
+			state: Collaborator.restoreState(state),
+		});
 	}
 
 	public update(data: CollaboratorData): void {
@@ -56,8 +70,14 @@ export class Collaborator extends TrackedEntity<CollaboratorState, CollaboratorC
 			name: state.name,
 			email: state.email,
 			birthdate: state.birthdate,
+			'test "prop"': state['test "prop"'],
 			address: new Address(state.address),
 		};
+	}
+
+	private static validateState(state: CollaboratorRestoreState): void {
+		state;
+		// should?
 	}
 
 }

@@ -1,25 +1,14 @@
-import { randomUUID } from 'node:crypto';
-import { StateCommit, StateDiffProcessor, StateDiff, StateCommitMetadata, StateCommitAuthor } from './StateCommit';
+import { StateCommit, StateDiff, StateCommitMetadata, StateCommitAuthor } from './StateCommit';
 import { Entity } from './Entity';
-import { DeepEqualityDiff } from './diff/DeepEqualityDiff';
 import { clone } from '../utils/clone';
+import { createCommit, createDiff } from './makeCommit';
 
 
 /*
 - [x] specify tracked values (all properties will be tracked)
 - [x] comparition functions for changed values (using shallow and deep comparission, also is possible to have multiple implementations of the changes processor)
-- [ ] how to create snapshots (consider untracked props and new props)
+- [x] how to create snapshots (consider untracked props and new props)
 - [ ] how to replay changes (creating a rollback change)
-
-- create entity
-- commit
-- update entity
-- commit
-- snapshot
-
-Doubts:
-- how to restore the state from the commits
-
 */
 
 export interface CreateTrackedEntityData<State extends object> {
@@ -34,16 +23,13 @@ export interface RestoreTrackedEntityData<State extends object> {
 	readonly id: string;
 }
 
-export interface StateCommitInput<ChangeEvent> {
+export interface StateCommitInput {
 	author: StateCommitAuthor;
-	event: ChangeEvent;
+	event: string;
 	metadata?: StateCommitMetadata;
 }
 
-export abstract class TrackedEntity<
-	State extends object,
-	ChangeEvent
-	> extends Entity<State> {
+export abstract class TrackedEntity<State extends object> extends Entity<State> {
 	protected previousState: Partial<State>;
 	protected stateVersion: number;
 
@@ -58,40 +44,28 @@ export abstract class TrackedEntity<
 		}
 	}
 
-	public getStateDiffs(diffMethod: StateDiffProcessor = new DeepEqualityDiff): StateDiff[] {
-		return diffMethod.process({
-			previousState: this.previousState,
-			state: this.state,
-		});
+	public getStateDiff(): StateDiff[] {
+		return createDiff({ previousState: this.previousState, state: this.state });
 	}
 
 	public get version(): number { return this.stateVersion; }
 
-	public commit({ author, event, metadata }: StateCommitInput<ChangeEvent>): StateCommit<ChangeEvent> {
-		this.stateVersion += 1;
+	public commit({ author, event, metadata = {} }: StateCommitInput): StateCommit {
+		const version = this.stateVersion + 1;
 
-		const diffMethod = new DeepEqualityDiff;
-		const diffs = diffMethod.process({
+		const commit = createCommit({
 			previousState: this.previousState,
-			state: this.state,
+			state: clone(this.state),
+			author,
+			entityId: this.id,
+			event,
+			metadata,
+			version
 		});
 
-		if (diffs.length === 0) {
-			throw new Error('Cannot create commit with unchaged state');
-		}
-
-		// deep clone
 		this.previousState = clone(this.state);
-
-		return {
-			id: randomUUID(),
-			diffs,
-			version: this.stateVersion,
-			date: new Date,
-			event,
-			author,
-			metadata: metadata ?? {}
-		};
+		this.stateVersion = version;
+		return commit;
 	}
 
 }

@@ -1,1 +1,3 @@
-# Entity commit
+# Gitity
+
+versioning for domain entities

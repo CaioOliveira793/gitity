@@ -1,7 +1,7 @@
 {
-  "name": "proxy_objects",
+  "name": "gitity",
   "version": "0.1.0",
-  "description": "Testing proxy objects",
+  "description": "versioning for domain entities",
   "author": "Caio Oliveira",
   "type": "commonjs",
   "main": "src/main.ts",
